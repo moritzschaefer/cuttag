@@ -1,0 +1,53 @@
+## General/Snakemake parameters, only used/set by wrapper or in Snakemake cmdl, but not in Snakefile
+pipeline: dna-mapping
+outdir: 
+configFile:
+clusterConfigFile:
+local: True
+maxJobs: 30
+## directory with fastq files
+indir: fastq
+## preconfigured target genomes (mm9,mm10,dm3,...) , see /path/to/snakemake_workflows/shared/organisms/
+## Value can be also path to your own genome config file!
+genome: GRCm38_release98
+## FASTQ file extension (default: ".fastq.gz")
+ext: '.fastq.gz'
+## paired-end read name extension (default: ['_R1', "_R2"])
+reads: [_R1, _R2]
+## mapping mode
+mode: mapping
+aligner: Bowtie2
+## Number of reads to downsample from each FASTQ file
+downsample:
+## Options for trimming
+trim: True
+trimmer: cutadapt
+trimmerOptions: -a CTGTCTCTTATACACATCTCCCAGCCCACCAGAC
+## Bin size of output files in bigWig format
+bwBinSize: 25
+## Run FASTQC read quality control
+fastqc: false
+## Run computeGCBias quality control
+GCBias: false
+## Retain only de-duplicated reads/read pairs
+dedup: false
+## Retain only reads with at least the given mapping quality
+mapq: 0
+## Retain only reads mapping in proper pairs
+properPairs: false
+## Mate orientation in paired-end experiments for Bowtie2 mapping
+## (default "--fr" is appropriate for Illumina sequencing)
+mateOrientation: --fr
+## other Bowtie2 stuff
+insertSizeMax: 700
+alignerOpts: --local --end-to-end --very-sensitive --no-mixed --no-discordant --phred33 -I 10 
+plotFormat: png
+UMIBarcode: False
+bcPattern: NNNNCCCCCCCC #default: 4 base umi barcode, 8 base cell barcode (eg. RELACS barcode)
+UMIDedup: False
+UMIDedupSep: "_"
+UMIDedupOpts:
+## Median/mean fragment length, only relevant for single-end data (default: 200)
+fragmentLength: 200
+qualimap: false
+verbose: false
