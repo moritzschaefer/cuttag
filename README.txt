@@ -16,3 +16,7 @@ from within the project directory
 # TODOs:
 - adjust bowtie-params for multi-map sequencing (for TE analysis)
 - integrate running snakepipes in the Snakefile
+- compare their data run/pipeline!
+- heatmaps (adjust gene_bed in config since it contains >100.000 transcripts at the moment...)
+- make deseq analysis more flexible
+

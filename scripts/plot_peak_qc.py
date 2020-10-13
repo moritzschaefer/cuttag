@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+sns.set_palette('Accent')
 fig, axes = plt.subplots(2, 2, figsize=(15, 12))
 
 df = pd.concat([
@@ -21,16 +22,18 @@ def _bed_lengths(f, meta):
         'type': meta['type']
     })
 
-peak_widths = pd.concat([_bed_lengths(f, df.iloc[0]) for i, f in enumerate(snakemake.input['beds'])])
+peak_widths = pd.concat([_bed_lengths(f, df.iloc[i]) for i, f in enumerate(snakemake.input['beds'])])
 
 # number of peaks
 axes[0, 0].set_title('#(Peaks)')
 sns.swarmplot(data=df, x='sample', hue='type', y='total_peaks', ax=axes[0, 0])
-axes[0, 0].set_xticklabels(axes[0,0].get_xticklabels(), rotation=30, ha='right')
+axes[0, 0].set_xticklabels(axes[0,0].get_xticklabels(), rotation=15, ha='right')
+axes[0, 0].set_yscale('log')
 
 # width of peaks
 axes[0, 1].set_title('Width of peaks')
-sns.violinplot(data=peak_widths, x='sample', y='width', hue='type')
+sns.violinplot(data=peak_widths, x='sample', y='width', hue='type', ax=axes[0, 1])
+axes[0, 1].set_yscale('log')
 
 # reproduced peaks
 axes[1, 0].set_title('Reproducibility of peaks across replicates')
@@ -39,7 +42,7 @@ sns.swarmplot(data=df, x='sample', hue='type', y='repl_percent', ax=axes[1, 0])
 # frips
 axes[1, 1].set_title('Percentage of fragments in peaks')
 sns.swarmplot(data=df, x='sample', hue='type', y='frips', ax=axes[1, 1])
-axes[1, 1].set_xticklabels(axes[1, 1].get_xticklabels(), rotation=30)
+axes[1, 1].set_xticklabels(axes[1, 1].get_xticklabels(), rotation=15, ha='right')
 
 plt.tight_layout()
 
