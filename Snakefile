@@ -24,6 +24,8 @@ rule all:
         'peakqc/plot.svg',
         'heatmaps/genes.png',
         expand('heatmaps/{sample}_peaks.png', sample=SIGNAL_SAMPLES),
+        'diffexp/table.csv',
+        'diffexp/ma_plot.svg'
 
 
 include: 'rules/peakqc.smk'
