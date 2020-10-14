@@ -35,8 +35,8 @@ include: 'rules/diffexp.smk'
 # generate scaled bedgraphs using ecoli-spikeins
 rule bedgraph:
     input:
-        mm10="mm10_mapping/Bowtie2/{sample}.bam",
-        ecoli="ecoli_mapping/Bowtie2/{sample}.bam"
+        mm10="mm10_mapping/filtered_bam/{sample}.bam",
+        ecoli="ecoli_mapping/filtered_bam/{sample}.bam"
     output:
         bg="normalized/{sample}.bedgraph",
         sf="scaleFactors/{sample}"
@@ -66,12 +66,12 @@ rule seacr:
         ab="normalized/{AB}_{cond}_{repl}.bedgraph",
         igg="normalized/IgG_{cond}_{repl}.bedgraph"
     params:
-        iggnormed=lambda wildcards, output: output['iggnormed'].replace('.stringent.bed', ''),
-        top1percent=lambda wildcards, output: output['top1percent'].replace('.stringent.bed', '')
-        # unpack(lambda wildcards, output: {key: value.replace('.stringent.bed', '') for key, value in output.items()})
+        iggnormed=lambda wildcards, output: output['iggnormed'].replace('.bed', ''),
+        top1percent=lambda wildcards, output: output['top1percent'].replace('.bed', '')
+        # unpack(lambda wildcards, output: {key: value.replace('.bed', '') for key, value in output.items()})
     output:
-        iggnormed="peaks/{AB}_{cond}_{repl}_iggnormed.stringent.bed",  # no need to exclude IgG in AB. It's excludeed before (AB_cond = ..)
-        top1percent="peaks/{AB}_{cond}_{repl}_top1percent.stringent.bed"
+        iggnormed="peaks/{AB}_{cond}_{repl}_iggnormed.bed",  # no need to exclude IgG in AB. It's excludeed before (AB_cond = ..)
+        top1percent="peaks/{AB}_{cond}_{repl}_top1percent.bed"
     log:
         iggnormed="log/seacr/{AB}_{cond}_{repl}_iggnormed.log",
         top1percent="log/seacr/{AB}_{cond}_{repl}_top1percent.log"

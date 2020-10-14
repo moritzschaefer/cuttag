@@ -1,6 +1,6 @@
 rule coordinate_sort_bam:
     input:
-        "mm10_mapping/Bowtie2/{sample}.bam",
+        "mm10_mapping/filtered_bam/{sample}.bam",
     output:
         "mm10_mapping/coordinate_sorted/{sample}.bam",
     conda:
@@ -64,7 +64,7 @@ rule plot_gene_heatmap:
 
 rule filter_peaks_summit:
     input:
-        'peaks/{sample}_iggnormed.stringent.bed'
+        'peaks/{sample}_iggnormed.bed'
     output:
         'peaks/{sample}_summit.bed'
     conda:

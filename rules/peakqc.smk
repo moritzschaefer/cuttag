@@ -1,6 +1,6 @@
 rule name_sort_bam:
     input:
-        sample_bam="mm10_mapping/Bowtie2/{AB}_{cond}_{repl}.bam",
+        sample_bam="mm10_mapping/filtered_bam/{AB}_{cond}_{repl}.bam",
     output:
         sorted_bam="mm10_mapping/name_sorted/{AB}_{cond}_{repl}.bam",
     conda:
@@ -13,9 +13,9 @@ rule name_sort_bam:
 # get quality control values
 rule peak_qc:
     input:
-        sample="peaks/{AB}_{cond}_{repl}_{type}.stringent.bed",
-        # other_replicate="peaks/{AB}_{cond}_{repl}_{type}.stringent.bed",
-        other_replicate=lambda wildcards: f"peaks/{wildcards.AB}_{wildcards.cond}_{(int(wildcards.repl) % 2) + 1}_{wildcards.type}.stringent.bed",
+        sample="peaks/{AB}_{cond}_{repl}_{type}.bed",
+        # other_replicate="peaks/{AB}_{cond}_{repl}_{type}.bed",
+        other_replicate=lambda wildcards: f"peaks/{wildcards.AB}_{wildcards.cond}_{(int(wildcards.repl) % 2) + 1}_{wildcards.type}.bed",
         sample_bam_sorted="mm10_mapping/name_sorted/{AB}_{cond}_{repl}.bam",
     output:
         "peakqc/{AB}_{cond}_{repl,\d+}_{type}.csv"
@@ -42,7 +42,7 @@ rule peak_qc:
 rule plot_peak_qcs:
     input:
         csvs=expand('peakqc/{AB_cond}_{repl}_{type}.csv', AB_cond=AB_cond, repl=[1, 2], type=['iggnormed', 'top1percent']),
-        beds=expand('peaks/{AB_cond}_{repl}_{type}.stringent.bed', AB_cond=AB_cond, repl=[1, 2], type=['iggnormed', 'top1percent'])
+        beds=expand('peaks/{AB_cond}_{repl}_{type}.bed', AB_cond=AB_cond, repl=[1, 2], type=['iggnormed', 'top1percent'])
     output:
         png='peakqc/plot.png',
         svg='peakqc/plot.svg',
