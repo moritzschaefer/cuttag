@@ -26,7 +26,8 @@ peak_widths = pd.concat([_bed_lengths(f, df.iloc[i]) for i, f in enumerate(snake
 
 # number of peaks
 axes[0, 0].set_title('#(Peaks)')
-sns.swarmplot(data=df, x='sample', hue='type', y='total_peaks', ax=axes[0, 0])
+sns.barplot(data=df, x='sample', hue='type', y='total_peaks', ax=axes[0, 0])
+sns.stripplot(data=df, x='sample', hue='type', y='total_peaks', ax=axes[0, 0], linewidth=0, dodge=True, color='black')
 axes[0, 0].set_xticklabels(axes[0,0].get_xticklabels(), rotation=15, ha='right')
 axes[0, 0].set_yscale('log')
 
@@ -37,11 +38,13 @@ axes[0, 1].set_yscale('log')
 
 # reproduced peaks
 axes[1, 0].set_title('Reproducibility of peaks across replicates')
-sns.swarmplot(data=df, x='sample', hue='type', y='repl_percent', ax=axes[1, 0])
+sns.barplot(data=df, x='sample', hue='type', y='repl_percent', ax=axes[1, 0])
+sns.stripplot(data=df, x='sample', hue='type', y='repl_percent', ax=axes[1, 0], dodge=True, color='black')
 
 # frips
 axes[1, 1].set_title('Percentage of fragments in peaks')
-sns.swarmplot(data=df, x='sample', hue='type', y='frips', ax=axes[1, 1])
+sns.barplot(data=df, x='sample', hue='type', y='frips', ax=axes[1, 1])
+sns.stripplot(data=df, x='sample', hue='type', y='frips', ax=axes[1, 1], dodge=True, color='black')
 axes[1, 1].set_xticklabels(axes[1, 1].get_xticklabels(), rotation=15, ha='right')
 
 plt.tight_layout()

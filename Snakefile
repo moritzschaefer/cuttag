@@ -24,40 +24,50 @@ rule all:
         'peakqc/plot.svg',
         'heatmaps/genes.png',
         expand('heatmaps/{sample}_peaks.png', sample=SIGNAL_SAMPLES),
-        'diffexp/table.csv',
-        'diffexp/ma_plot.svg'
+        # 'diffexp/table.csv',
+        # 'diffexp/ma_plot.svg',
+        expand('peaks/{sample}_{normalization}.genes.bed', normalization=['iggnormed', 'top1percent'], sample=SIGNAL_SAMPLES),
 
 
 include: 'rules/peakqc.smk'
 include: 'rules/heatmap.smk'
 include: 'rules/diffexp.smk'
 
+rule scale_factor:
+    input:
+        ecoli="ecoli_mapping/filtered_bam/{sample}.filtered.bam"
+    output:
+        sf="scaleFactors/{sample}"
+    conda:
+        'env.yaml'
+    shell: '''
+        seqDepthDouble=$(samtools view -F 0x04 "{input.ecoli}" | wc -l)
+        c=10000  # depends on the number of reads the ecoli mapping has.
+        seqDepth=$((seqDepthDouble/2))
+        if [[ "$seqDepth" -gt "1" ]]; then
+            scale_factor=`echo "$c / $seqDepth" | bc -l`
+            echo $scale_factor > {output.sf}
+        else
+            echo "$c" > {output.sf}
+        fi
+    '''
+
 # generate scaled bedgraphs using ecoli-spikeins
 rule bedgraph:
     input:
-        mm10="mm10_mapping/filtered_bam/{sample}.bam",
-        ecoli="ecoli_mapping/filtered_bam/{sample}.bam"
-    output:
-        bg="normalized/{sample}.bedgraph",
+        mm10="mm10_mapping/filtered_bam/{sample}.filtered.bam",
         sf="scaleFactors/{sample}"
+    output:
+        bg="normalized/{sample}.bedgraph"
     conda:
         'env.yaml'
     log:
         "log/bedgraph/{sample}.log"
     shell: '''
-        seqDepthDouble=$(samtools view -F 0x04 "{input.ecoli}" | wc -l)
-        seqDepth=$((seqDepthDouble/2))
-        if [[ "$seqDepth" -gt "1" ]]; then  # only continue if we have spike_in reads
-            scale_factor=`echo "10000 / $seqDepth" | bc -l`
-            echo $scale_factor > {output.sf}
+        scale_factor=`cat {input.sf}`
 
-            # no need to filter for unmapped reads (they are not counted here)
-            bedtools genomecov -pc -bg -scale $scale_factor -ibam "{input.mm10}" > "{output.bg}" 2> {log}
-        else
-            touch {output.bg}  # generate empty file anyways
-            echo "-1" > {output.sf}
-            echo "seqDepth=0 for {wildcards.sample}" > {log}
-        fi
+        # no need to filter for unmapped reads (they are not counted here)
+        bedtools genomecov -pc -bg -scale $scale_factor -ibam "{input.mm10}" > "{output.bg}" 2> {log}
     '''
 
 # find peaks
@@ -78,6 +88,42 @@ rule seacr:
     conda:
         'env.yaml'
     shell: '''
-        SEACR_1.3.sh {input.ab} {input.igg} non stringent {params.iggnormed} 2>&1 > {log.iggnormed}
-        SEACR_1.3.sh {input.ab} 0.01 non stringent {params.top1percent} 2>&1 > {log.top1percent}
-        '''
+    SEACR_1.3.sh {input.ab} {input.igg} non stringent {params.iggnormed} {params.iggnormed} 2>&1 > {log.iggnormed}
+        bedtools sort -i {params.iggnormed}.stringent.bed > {output.iggnormed}
+        rm {params.iggnormed}.stringent.bed
+    SEACR_1.3.sh {input.ab} 0.01 non stringent {params.top1percent} {params.top1percent} 2>&1 > {log.top1percent}
+        bedtools sort -i {params.top1percent}.stringent.bed > {output.top1percent}
+        rm {params.top1percent}.stringent.bed
+    '''
+
+rule generate_gene_only_gtf:
+    input:
+        config['genes_gtf']
+    output:
+        'protein_coding_genes.gtf'
+    conda:
+        'env.yaml'
+    shell: '''
+        awk -F $'\t' 'BEGIN {{ OFS=FS }} {{if ($3 == "gene" && $9 ~ /protein_coding/ ) print $0;}}' {input} | sed 's/^chr//' | sort -k1,1 -k4,4n -s > {output}
+    '''
+
+
+rule bedtools_closest:
+    input:
+        peaks='peaks/{sample}.bed',  # both need to be sorted in the same manner.
+        genes='protein_coding_genes.gtf'  # TODO should add TEs here maybe later..
+    output:
+        'peaks/{sample}.genes.bed'
+    params:
+        field_offset="6"
+    log:
+        "log/bedtools_closest_{sample}.log"
+    conda:
+        'env.yaml'
+    shell: '''
+         # adapted from snakepipes
+         bedtools closest -d -a {input.peaks} -b {input.genes} \
+         | cut -f1-{params.field_offset},$(( {params.field_offset} + 9 )),$(( {params.field_offset} + 10 )) \
+         | awk -F $'\\t' '{{OFS=FS}} {{$7=gensub(".*gene_id \\"([^\\"]+)\\".*gene_name \\"([^\\"]+)\\".*", "\\\\1\\t\\\\2", $7) ; print}}' \
+         > {output}  2> {log}
+    '''

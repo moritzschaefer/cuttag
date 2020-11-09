@@ -1,6 +1,6 @@
 rule coordinate_sort_bam:
     input:
-        "mm10_mapping/filtered_bam/{sample}.bam",
+        "mm10_mapping/filtered_bam/{sample}.filtered.bam",
     output:
         "mm10_mapping/coordinate_sorted/{sample}.bam",
     conda:
