@@ -21,12 +21,13 @@ aligner: Bowtie2
 downsample:
 ## Options for trimming
 trim: True
-trimmer: cutadapt
-trimmerOptions: -a CTGTCTCTTATACACATCTCCCAGCCCACCAGAC
+trimmer: trimgalore
+# -a CTGTCTCTTATACACATCTCCCAGCCCACCAGAC
+trimmerOptions: --nextera --paired
 ## Bin size of output files in bigWig format
 bwBinSize: 25
 ## Run FASTQC read quality control
-fastqc: false
+fastqc: true
 ## Run computeGCBias quality control
 GCBias: false
 ## Retain only de-duplicated reads/read pairs
@@ -40,7 +41,7 @@ properPairs: false
 mateOrientation: --fr
 ## other Bowtie2 stuff
 insertSizeMax: 700
-alignerOpts: --local --end-to-end --very-sensitive --no-mixed --no-discordant --phred33 -I 10 
+alignerOpts: --local --very-sensitive --no-mixed --no-discordant --phred33 -I 10
 plotFormat: png
 UMIBarcode: False
 bcPattern: NNNNCCCCCCCC #default: 4 base umi barcode, 8 base cell barcode (eg. RELACS barcode)

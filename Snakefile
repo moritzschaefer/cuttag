@@ -15,8 +15,14 @@ ALL_SAMPLES = list(set([re.match('[^_]+_[^_]+_[^_]+', f).group() for f in os.lis
 SIGNAL_SAMPLES = list(set([s for s in ALL_SAMPLES if 'IgG' not in s]))
 AB_cond = list(set([re.match('[^_]+_[^_]+', s).group() for s in SIGNAL_SAMPLES]))
 
-configfile: 'config.yaml'
+# configfile: 'config.yaml'
+# can be overwritten 
+gtfs = {
+    'rmsk': config.get('rmsk_gtf', '/home/schamori/data/snakepipes/GRCm38_98/annotation/rmsk.gtf'),
+    'genes': config.get('genes_gtf', '/home/schamori/data/snakepipes/GRCm38_98/annotation/genes.gtf')
+}
 
+genes_bed = config.get('genes_bed', '/home/schamori/data/snakepipes/GRCm38_98/annotation/genes.bed')
 
 rule all:
     input:
@@ -26,7 +32,7 @@ rule all:
         expand('heatmaps/{sample}_peaks.png', sample=SIGNAL_SAMPLES),
         # 'diffexp/table.csv',
         # 'diffexp/ma_plot.svg',
-        expand('peaks/{sample}_{normalization}.genes.bed', normalization=['iggnormed', 'top1percent'], sample=SIGNAL_SAMPLES),
+        expand('peaks/{sample}_{normalization}.{annot}.bed', normalization=['iggnormed', 'top1percent'], sample=SIGNAL_SAMPLES, annot=['genes', 'rmsk']),
 
 
 include: 'rules/peakqc.smk'
@@ -97,27 +103,29 @@ rule seacr:
     '''
 
 rule generate_gene_only_gtf:
+    'Generate GTF with only gene entries but containing TEs as well as protein_coding genes'
     input:
-        config['genes_gtf']
+        lambda wildcards: gtfs[wildcards.annot]
     output:
-        'protein_coding_genes.gtf'
+        'ref/{annot}.gtf'
+    # params:  # we could add custom filters for rmsk vs genes 
+#         && $9 ~ /protein_coding/
     conda:
         'env.yaml'
     shell: '''
-        awk -F $'\t' 'BEGIN {{ OFS=FS }} {{if ($3 == "gene" && $9 ~ /protein_coding/ ) print $0;}}' {input} | sed 's/^chr//' | sort -k1,1 -k4,4n -s > {output}
+        awk -F $'\t' 'BEGIN {{ OFS=FS }} {{if ($3 == "gene" ) print $0;}}' {input} | sed 's/^chr//' | sort -k1,1 -k4,4n -s > {output}
     '''
-
 
 rule bedtools_closest:
     input:
         peaks='peaks/{sample}.bed',  # both need to be sorted in the same manner.
-        genes='protein_coding_genes.gtf'  # TODO should add TEs here maybe later..
+        genes='ref/{annot}.gtf'
     output:
-        'peaks/{sample}.genes.bed'
+        'peaks/{sample}.{annot}.bed'
     params:
         field_offset="6"
     log:
-        "log/bedtools_closest_{sample}.log"
+        "log/bedtools_closest_{sample}.{annot}.log"
     conda:
         'env.yaml'
     shell: '''

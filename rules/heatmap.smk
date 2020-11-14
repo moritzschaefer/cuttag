@@ -35,7 +35,7 @@ rule generate_bw:
 rule generate_gene_matrix:
     input:
         bws=expand('raw_coverage/{sample}.bw', sample=SIGNAL_SAMPLES),
-        gene_bed=config['heatmap_bed']
+        gene_bed=genes_bed
     output:
         'heatmaps/genes.mat.gz'
     conda:

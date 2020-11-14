@@ -1,6 +1,6 @@
 rule name_sort_bam:
     input:
-        sample_bam="mm10_mapping/filtered_bam/{AB}_{cond}_{repl}.bam",
+        sample_bam="mm10_mapping/filtered_bam/{AB}_{cond}_{repl}.filtered.bam",
     output:
         sorted_bam="mm10_mapping/name_sorted/{AB}_{cond}_{repl}.bam",
     conda:
