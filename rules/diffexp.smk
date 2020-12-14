@@ -2,7 +2,7 @@ import re
 
 rule deseq:
     input:
-        peaks=expand('peaks/{sample}_iggnormed.bed', sample=SIGNAL_SAMPLES),
+        peaks=expand('peaks/{sample}_top1percent.bed', sample=SIGNAL_SAMPLES),  # TODO for now we use top1percent...
         bams=expand('mm10_mapping/filtered_bam/{sample}.filtered.bam', sample=SIGNAL_SAMPLES)
     output:
         ma_plot='diffexp/ma_plot.svg',

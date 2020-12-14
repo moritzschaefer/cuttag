@@ -29,6 +29,9 @@ colnames(countMat) = snakemake@params[["sample_names"]]
 selectR = which(rowSums(countMat) > 5) ## remove low count genes
 dataS = countMat[selectR,]
 condition = snakemake@params[["condition_names"]]
+
+save.image()
+
 dds = DESeqDataSetFromMatrix(countData = dataS,
                              colData = DataFrame(condition),
                              design = ~ condition)

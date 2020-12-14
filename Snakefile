@@ -30,8 +30,8 @@ rule all:
         'peakqc/plot.svg',
         'heatmaps/genes.png',
         expand('heatmaps/{sample}_peaks.png', sample=SIGNAL_SAMPLES),
-        # 'diffexp/table.csv',
-        # 'diffexp/ma_plot.svg',
+        'diffexp/table.csv',
+        'diffexp/ma_plot.svg',
         expand('peaks/{sample}_{normalization}.{annot}.bed', normalization=['iggnormed', 'top1percent'], sample=SIGNAL_SAMPLES, annot=['genes', 'rmsk']),
 
 
