@@ -64,9 +64,9 @@ rule plot_gene_heatmap:
 
 rule filter_peaks_summit:
     input:
-        'peaks/{sample}_iggnormed.bed'
+        'peaks/{sample}_top1percent.bed'
     output:
-        'peaks/{sample}_summit.bed'
+        'peaks/{sample}_top1percent_summit.bed'
     conda:
         '../env.yaml'
     shell: '''
@@ -77,9 +77,9 @@ rule filter_peaks_summit:
 rule generate_peak_matrix:
     input:
         raw_coverage="raw_coverage/{sample}.bw",
-        peak_summit_bed="peaks/{sample}_summit.bed"
+        peak_summit_bed="peaks/{sample}_top1percent_summit.bed"
     output:
-        'heatmaps/{sample}_peaks.mat.gz'
+        'heatmaps/{sample}_top1percent_peaks.mat.gz'
     params:
         cores=20
     conda:
@@ -92,9 +92,9 @@ rule generate_peak_matrix:
 
 rule plot_peak_heatmap:
     input:
-        'heatmaps/{sample}_peaks.mat.gz'
+        'heatmaps/{sample}_top1percent_peaks.mat.gz'
     output:
-        'heatmaps/{sample}_peaks.png'
+        'heatmaps/{sample}_top1percent_peaks.png'
     conda:
         '../env.yaml'
     shell: '''

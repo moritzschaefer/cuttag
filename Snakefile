@@ -30,7 +30,7 @@ rule all:
         'peakqc/plot.png',
         'peakqc/plot.svg',
         'heatmaps/genes.png',
-        expand('heatmaps/{sample}_peaks.png', sample=SIGNAL_SAMPLES),
+        expand('heatmaps/{sample}_top1percent_peaks.png', sample=SIGNAL_SAMPLES),
         # 'diffexp/table.csv',
         "diffexp/master_peaks.bed",
         expand('diffexp/ma_plot_{target}.svg', target=[c for c in CONDITION_NAMES if c != NORMALIZER]),
