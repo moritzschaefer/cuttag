@@ -5,13 +5,23 @@ library(dplyr)
 library(chromVAR)
 
 # Create a master peak list merging all the peaks called for each sample.
-mPeak = GRanges()
+masterPeak = GRanges()
 ## overlap with bam file to get count
 for(peaks in snakemake@input[["peaks"]]) {  # includes replicates
     peakRes = read.table(peaks, header = FALSE, fill = TRUE)
-    mPeak = GRanges(seqnames = peakRes$V1, IRanges(start = peakRes$V2, end = peakRes$V3), strand = "*") %>% append(mPeak, .)
+    masterPeak = GRanges(seqnames = peakRes$V1, IRanges(start = peakRes$V2, end = peakRes$V3), strand = "*") %>% append(masterPeak, .)
 }
-masterPeak = reduce(mPeak)
+masterPeak = reduce(masterPeak)
+
+# save masterPeak file
+masterPeakDf <- data.frame(seqnames=seqnames(masterPeak),
+                 starts=start(masterPeak)-1,
+                 ends=end(masterPeak),
+                 names=c(rep(".", length(masterPeak))),
+                 scores=c(rep(".", length(masterPeak))),
+                 strands=strand(masterPeak))
+write.table(masterPeakDf, file=snakemake@output[["master_peaks"]], quote=F, sep=",", row.names=F, col.names=F)
+
 
 # Get the fragment counts for each peak in the master peak list.
 library(DESeq2)
@@ -29,25 +39,16 @@ colnames(countMat) = snakemake@params[["sample_names"]]
 selectR = which(rowSums(countMat) > 5) ## remove low count genes
 dataS = countMat[selectR,]
 condition = snakemake@params[["condition_names"]]
+batch = snakemake@params[["batch_numbers"]]
+
+colData = DataFrame(condition, batch)
 
 save.image()
 
 dds = DESeqDataSetFromMatrix(countData = dataS,
-                             colData = DataFrame(condition),
-                             design = ~ condition)
-DDS = DESeq(dds)
-normDDS = counts(DDS, normalized = TRUE) ## normalization with respect to the sequencing depth
-colnames(normDDS) = paste0(colnames(normDDS), "_norm")
-res = results(DDS, independentFiltering = FALSE, altHypothesis = "greaterAbs")
+                             colData = colData,
+                             design = ~batch + condition)  # we control for batch effect
+dds = DESeq(dds)
 
-countMatDiff = cbind(dataS, normDDS, res)
-head(countMatDiff)
 
-# copied from rna-seq-star-deseq2/deseq2.R
-res <- res[order(res$padj),]
-
-svg(snakemake@output[["ma_plot"]])
-plotMA(res, ylim=c(-2,2))
-dev.off()
-
-write.table(as.data.frame(res), file=snakemake@output[["table"]], sep=",")
+saveRDS(dds, file=snakemake@output[["rds"]])

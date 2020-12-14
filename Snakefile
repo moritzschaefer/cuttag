@@ -14,9 +14,10 @@ import re
 ALL_SAMPLES = list(set([re.match('[^_]+_[^_]+_[^_]+', f).group() for f in os.listdir('fastq') if 'fastq.gz' in f]))
 SIGNAL_SAMPLES = list(set([s for s in ALL_SAMPLES if 'IgG' not in s]))
 AB_cond = list(set([re.match('[^_]+_[^_]+', s).group() for s in SIGNAL_SAMPLES]))
-
+CONDITION_NAMES = [re.sub('_\d+$', '', s) for s in SIGNAL_SAMPLES]
+NORMALIZER = config.get('diffexp_normalizer', [c for c in CONDITION_NAMES if 'WT' in c][0])
 # configfile: 'config.yaml'
-# can be overwritten 
+# can be overwritten
 gtfs = {
     'rmsk': config.get('rmsk_gtf', '/home/schamori/data/snakepipes/GRCm38_98/annotation/rmsk.gtf'),
     'genes': config.get('genes_gtf', '/home/schamori/data/snakepipes/GRCm38_98/annotation/genes.gtf')
@@ -30,8 +31,9 @@ rule all:
         'peakqc/plot.svg',
         'heatmaps/genes.png',
         expand('heatmaps/{sample}_peaks.png', sample=SIGNAL_SAMPLES),
-        'diffexp/table.csv',
-        'diffexp/ma_plot.svg',
+        # 'diffexp/table.csv',
+        "diffexp/master_peaks.bed",
+        expand('diffexp/ma_plot_{target}.svg', target=[c for c in CONDITION_NAMES if c != NORMALIZER]),
         expand('peaks/{sample}_{normalization}.{annot}.bed', normalization=['iggnormed', 'top1percent'], sample=SIGNAL_SAMPLES, annot=['genes', 'rmsk']),
 
 
