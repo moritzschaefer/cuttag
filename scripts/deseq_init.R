@@ -15,7 +15,7 @@ masterPeak = reduce(masterPeak)
 
 # save masterPeak file as bed
 masterPeakDf <- data.frame(seqnames=seqnames(masterPeak),
-                 starts=start(masterPeak)-1,
+                 starts=start(masterPeak),
                  ends=end(masterPeak),
                  names=c(rep(".", length(masterPeak))),
                  scores=c(rep(".", length(masterPeak))),

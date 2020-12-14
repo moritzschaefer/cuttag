@@ -136,7 +136,7 @@ rule bedtools_closest:
         'env.yaml'
     shell: '''
          # adapted from snakepipes
-         bedtools closest -d -a {input.peaks} -b {input.genes} \
+         bedtools closest -d -a <(sort -k1,1 -k2,2n {input.peaks}) -b {input.genes} \
          | cut -f1-{params.field_offset},$(( {params.field_offset} + 9 )),$(( {params.field_offset} + 10 )) \
          | awk -F $'\\t' '{{OFS=FS}} {{$7=gensub(".*gene_id \\"([^\\"]+)\\".*gene_name \\"([^\\"]+)\\".*", "\\\\1\\t\\\\2", $7) ; print}}' \
          > {output}  2> {log}
