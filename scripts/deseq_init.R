@@ -13,14 +13,14 @@ for(peaks in snakemake@input[["peaks"]]) {  # includes replicates
 }
 masterPeak = reduce(masterPeak)
 
-# save masterPeak file
+# save masterPeak file as bed
 masterPeakDf <- data.frame(seqnames=seqnames(masterPeak),
                  starts=start(masterPeak)-1,
                  ends=end(masterPeak),
                  names=c(rep(".", length(masterPeak))),
                  scores=c(rep(".", length(masterPeak))),
                  strands=strand(masterPeak))
-write.table(masterPeakDf, file=snakemake@output[["master_peaks"]], quote=F, sep=",", row.names=F, col.names=F)
+write.table(masterPeakDf, file=snakemake@output[["master_peaks"]], quote=F, sep="\t", row.names=F, col.names=F)
 
 
 # Get the fragment counts for each peak in the master peak list.

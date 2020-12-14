@@ -13,12 +13,12 @@ rule name_sort_bam:
 # get quality control values
 rule peak_qc:
     input:
-        sample="peaks/{AB}_{cond}_{repl}_{type}.bed",
+        sample="peaks/{AB}_{cond}_{repl}_top{percent}percent.bed",
         # other_replicate="peaks/{AB}_{cond}_{repl}_{type}.bed",
-        other_replicate=lambda wildcards: f"peaks/{wildcards.AB}_{wildcards.cond}_{(int(wildcards.repl) % 2) + 1}_{wildcards.type}.bed",
+        other_replicate=lambda wildcards: f"peaks/{wildcards.AB}_{wildcards.cond}_{(int(wildcards.repl) % 2) + 1}_top{wildcards.percent}percent.bed",
         sample_bam_sorted="mm10_mapping/name_sorted/{AB}_{cond}_{repl}.bam",
     output:
-        "peakqc/{AB}_{cond}_{repl,\d+}_{type}.csv"
+        "peakqc/{AB}_{cond}_{repl,\d+}_top{percent}percent.csv"
     conda:
         '../env.yaml'
     shell: '''
@@ -35,17 +35,17 @@ rule peak_qc:
         # weirdly, 'bedtools intersect' reports exactly twice as many reads as pairtobed. seems like bedtools intersect considers the whole fragment and always reports both reads per fragment
         mappedFragsInPeaks=$(bedtools pairtobed -type ospan -abam {input.sample_bam_sorted} -b {input.sample} -bedpe | wc -l)
         frip=$(echo "100 * $mappedFragsInPeaks / $mappedFrags" | bc -l)
-        echo "antibody,condition,replicate,type,mapped_fragments,mapped_fragments_in_peaks,frips,total_peaks,overlap_peaks,repl_percent" > {output}
-        echo "{wildcards.AB},{wildcards.cond},{wildcards.repl},{wildcards.type},$mappedFrags,$mappedFragsInPeaks,$frip,$total_peaks,$overlap_peaks,$repl_percent" >> {output}
+        echo "antibody,condition,replicate,topnpercent,mapped_fragments,mapped_fragments_in_peaks,frips,total_peaks,overlap_peaks,repl_percent" > {output}
+        echo "{wildcards.AB},{wildcards.cond},{wildcards.repl},{wildcards.percent},$mappedFrags,$mappedFragsInPeaks,$frip,$total_peaks,$overlap_peaks,$repl_percent" >> {output}
     '''
 
 rule plot_peak_qcs:
     input:
-        csvs=expand('peakqc/{AB_cond}_{repl}_{type}.csv', AB_cond=AB_cond, repl=[1, 2], type=['top1percent']),
-        beds=expand('peaks/{AB_cond}_{repl}_{type}.bed', AB_cond=AB_cond, repl=[1, 2], type=['top1percent'])
+        csvs=expand('peakqc/{AB_cond}_{repl}_top{{percent}}percent.csv', AB_cond=AB_cond, repl=[1, 2]),
+        beds=expand('peaks/{AB_cond}_{repl}_top{{percent}}percent.bed', AB_cond=AB_cond, repl=[1, 2])
     output:
-        png='peakqc/plot.png',
-        svg='peakqc/plot.svg',
+        png='peakqc/plot_top{percent}percent.png',
+        svg='peakqc/plot_top{percent}percent.svg',
     conda:
         '../env.yaml'
     script:

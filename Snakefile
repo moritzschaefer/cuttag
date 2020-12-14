@@ -16,6 +16,7 @@ SIGNAL_SAMPLES = list(set([s for s in ALL_SAMPLES if 'IgG' not in s]))
 AB_cond = list(set([re.match('[^_]+_[^_]+', s).group() for s in SIGNAL_SAMPLES]))
 CONDITION_NAMES = [re.sub('_\d+$', '', s) for s in SIGNAL_SAMPLES]
 NORMALIZER = config.get('diffexp_normalizer', [c for c in CONDITION_NAMES if 'WT' in c][0])
+PERCENTAGES = config.get('percentages', [1, 2, 5])
 # configfile: 'config.yaml'
 # can be overwritten
 gtfs = {
@@ -23,18 +24,20 @@ gtfs = {
     'genes': config.get('genes_gtf', '/home/schamori/data/snakepipes/GRCm38_98/annotation/genes.gtf')
 }
 
+wildcard_constraints:
+    annot='|'.join(gtfs.keys())
+
 genes_bed = config.get('genes_bed', '/home/schamori/data/snakepipes/GRCm38_98/annotation/genes.bed')
 
 rule all:
     input:
-        'peakqc/plot.png',
-        'peakqc/plot.svg',
+        expand('peakqc/plot_top{percent}percent.{ext}', percent=PERCENTAGES, ext=['svg', 'png']),
         'heatmaps/genes.png',
-        expand('heatmaps/{sample}_top1percent_peaks.png', sample=SIGNAL_SAMPLES),
+        expand('heatmaps/{sample}_top{percent}percent_peaks.png', sample=SIGNAL_SAMPLES, percent=PERCENTAGES),
         # 'diffexp/table.csv',
-        "diffexp/master_peaks.bed",
-        expand('diffexp/ma_plot_{target}.svg', target=[c for c in CONDITION_NAMES if c != NORMALIZER]),
-        expand('peaks/{sample}_{normalization}.{annot}.bed', normalization=['top1percent'], sample=SIGNAL_SAMPLES, annot=['genes', 'rmsk']),
+        expand("diffexp/master_peaks_top{percent}percent.{annot}.bed", annot=['genes', 'rmsk'], percent=PERCENTAGES),
+        expand('diffexp/ma_plot_{target}_top{percent}percent.svg', target=[c for c in CONDITION_NAMES if c != NORMALIZER], percent=PERCENTAGES),
+        expand('peaks/{sample}_top{percent}percent.{annot}.bed', percent=PERCENTAGES, sample=SIGNAL_SAMPLES, annot=['genes', 'rmsk']),
 
 
 include: 'rules/peakqc.smk'
@@ -85,24 +88,24 @@ rule seacr:
         # igg="normalized/IgG_{cond}_{repl}.bedgraph"
     params:
         # iggnormed=lambda wildcards, output: output['iggnormed'].replace('.bed', ''),
-        top_n_percent=lambda wildcards, output: output['top1percent'].replace('.bed', '')
+        lambda wildcards, output: output[0].replace('.bed', '')
         # unpack(lambda wildcards, output: {key: value.replace('.bed', '') for key, value in output.items()})
     output:
         # iggnormed="peaks/{AB}_{cond}_{repl}_iggnormed.bed",  # no need to exclude IgG in AB. It's excludeed before (AB_cond = ..)
-        top1percent="peaks/{AB}_{cond}_{repl}_top1percent.bed"
+        "peaks/{AB}_{cond}_{repl}_top{percent}percent.bed"
     log:
         # iggnormed="log/seacr/{AB}_{cond}_{repl}_iggnormed.log",
-        top1percent="log/seacr/{AB}_{cond}_{repl}_top1percent.log"
+        "log/seacr/{AB}_{cond}_{repl}_top{percent}percent.log"
     conda:
         'env.yaml'
     shell: '''
+    SEACR_1.3.sh {input.ab} 0.01 non stringent {params} {params} 2>&1 > {log}
+        bedtools sort -i {params}.stringent.bed > {output}
+        rm {params}.stringent.bed
+    '''
     # SEACR_1.3.sh {input.ab} {input.igg} non stringent {params.iggnormed} {params.iggnormed} 2>&1 > {log.iggnormed}
     #     bedtools sort -i {params.iggnormed}.stringent.bed > {output.iggnormed}
     #     rm {params.iggnormed}.stringent.bed
-    SEACR_1.3.sh {input.ab} 0.01 non stringent {params.top1percent} {params.top1percent} 2>&1 > {log.top1percent}
-        bedtools sort -i {params.top1percent}.stringent.bed > {output.top1percent}
-        rm {params.top1percent}.stringent.bed
-    '''
 
 rule generate_gene_only_gtf:
     'Generate GTF with only gene entries but containing TEs as well as protein_coding genes'
@@ -118,16 +121,17 @@ rule generate_gene_only_gtf:
         awk -F $'\t' 'BEGIN {{ OFS=FS }} {{if ($3 == "gene" ) print $0;}}' {input} | sed 's/^chr//' | sort -k1,1 -k4,4n -s > {output}
     '''
 
+
 rule bedtools_closest:
     input:
-        peaks='peaks/{sample}.bed',  # both need to be sorted in the same manner.
+        peaks='{sample}.bed',  # both need to be sorted in the same manner.
         genes='ref/{annot}.gtf'
     output:
-        'peaks/{sample}.{annot}.bed'
+        '{sample}.{annot}.bed'
     params:
         field_offset="6"
     log:
-        "log/bedtools_closest_{sample}.{annot}.log"
+        "log/bedtools_closest/{sample}.{annot}.log"
     conda:
         'env.yaml'
     shell: '''
