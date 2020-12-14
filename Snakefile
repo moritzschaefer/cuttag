@@ -34,7 +34,7 @@ rule all:
         # 'diffexp/table.csv',
         "diffexp/master_peaks.bed",
         expand('diffexp/ma_plot_{target}.svg', target=[c for c in CONDITION_NAMES if c != NORMALIZER]),
-        expand('peaks/{sample}_{normalization}.{annot}.bed', normalization=['iggnormed', 'top1percent'], sample=SIGNAL_SAMPLES, annot=['genes', 'rmsk']),
+        expand('peaks/{sample}_{normalization}.{annot}.bed', normalization=['top1percent'], sample=SIGNAL_SAMPLES, annot=['genes', 'rmsk']),
 
 
 include: 'rules/peakqc.smk'
@@ -82,23 +82,23 @@ rule bedgraph:
 rule seacr:
     input:
         ab="normalized/{AB}_{cond}_{repl}.bedgraph",
-        igg="normalized/IgG_{cond}_{repl}.bedgraph"
+        # igg="normalized/IgG_{cond}_{repl}.bedgraph"
     params:
-        iggnormed=lambda wildcards, output: output['iggnormed'].replace('.bed', ''),
-        top1percent=lambda wildcards, output: output['top1percent'].replace('.bed', '')
+        # iggnormed=lambda wildcards, output: output['iggnormed'].replace('.bed', ''),
+        top_n_percent=lambda wildcards, output: output['top1percent'].replace('.bed', '')
         # unpack(lambda wildcards, output: {key: value.replace('.bed', '') for key, value in output.items()})
     output:
-        iggnormed="peaks/{AB}_{cond}_{repl}_iggnormed.bed",  # no need to exclude IgG in AB. It's excludeed before (AB_cond = ..)
+        # iggnormed="peaks/{AB}_{cond}_{repl}_iggnormed.bed",  # no need to exclude IgG in AB. It's excludeed before (AB_cond = ..)
         top1percent="peaks/{AB}_{cond}_{repl}_top1percent.bed"
     log:
-        iggnormed="log/seacr/{AB}_{cond}_{repl}_iggnormed.log",
+        # iggnormed="log/seacr/{AB}_{cond}_{repl}_iggnormed.log",
         top1percent="log/seacr/{AB}_{cond}_{repl}_top1percent.log"
     conda:
         'env.yaml'
     shell: '''
-    SEACR_1.3.sh {input.ab} {input.igg} non stringent {params.iggnormed} {params.iggnormed} 2>&1 > {log.iggnormed}
-        bedtools sort -i {params.iggnormed}.stringent.bed > {output.iggnormed}
-        rm {params.iggnormed}.stringent.bed
+    # SEACR_1.3.sh {input.ab} {input.igg} non stringent {params.iggnormed} {params.iggnormed} 2>&1 > {log.iggnormed}
+    #     bedtools sort -i {params.iggnormed}.stringent.bed > {output.iggnormed}
+    #     rm {params.iggnormed}.stringent.bed
     SEACR_1.3.sh {input.ab} 0.01 non stringent {params.top1percent} {params.top1percent} 2>&1 > {log.top1percent}
         bedtools sort -i {params.top1percent}.stringent.bed > {output.top1percent}
         rm {params.top1percent}.stringent.bed

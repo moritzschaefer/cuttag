@@ -41,8 +41,8 @@ rule peak_qc:
 
 rule plot_peak_qcs:
     input:
-        csvs=expand('peakqc/{AB_cond}_{repl}_{type}.csv', AB_cond=AB_cond, repl=[1, 2], type=['iggnormed', 'top1percent']),
-        beds=expand('peaks/{AB_cond}_{repl}_{type}.bed', AB_cond=AB_cond, repl=[1, 2], type=['iggnormed', 'top1percent'])
+        csvs=expand('peakqc/{AB_cond}_{repl}_{type}.csv', AB_cond=AB_cond, repl=[1, 2], type=['top1percent']),
+        beds=expand('peaks/{AB_cond}_{repl}_{type}.bed', AB_cond=AB_cond, repl=[1, 2], type=['top1percent'])
     output:
         png='peakqc/plot.png',
         svg='peakqc/plot.svg',
