@@ -17,7 +17,7 @@ masterPeak = reduce(masterPeak)
 masterPeakDf <- data.frame(seqnames=seqnames(masterPeak),
                  starts=start(masterPeak),
                  ends=end(masterPeak),
-                 names=c(rep(".", length(masterPeak))),
+                 names=sapply(1:length(masterPeak), function(i) paste0("masterPeak_", i)),
                  scores=c(rep(".", length(masterPeak))),
                  strands=strand(masterPeak))
 write.table(masterPeakDf, file=snakemake@output[["master_peaks"]], quote=F, sep="\t", row.names=F, col.names=F)

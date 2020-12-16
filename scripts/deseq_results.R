@@ -10,6 +10,7 @@ res = results(dds, independentFiltering = FALSE,
               contrast=c("condition", snakemake@wildcards[["target"]], snakemake@params[["control"]])
               )
 
+
 countMatDiff = cbind(dataS, normDDS, res)
 
 # copied from rna-seq-star-deseq2/deseq2.R
@@ -18,5 +19,7 @@ res <- res[order(res$padj),]
 svg(snakemake@output[["ma_plot"]])
 plotMA(res, ylim=c(-2,2))
 dev.off()
+
+rownames(countMatDiff) <- lapply(1:nrow(countMatDiff), function(i) paste0("masterPeak_", i))
 
 write.table(countMatDiff, file=snakemake@output[["table"]], sep=",")
